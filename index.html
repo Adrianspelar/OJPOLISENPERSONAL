@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ÖJ Polisen - Intranät</title>
+<style>
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background: #f4f7fb;
+    color: #222;
+  }
+  header {
+    background-color: #004080;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  nav {
+    background-color: #003366;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  nav a {
+    color: white;
+    padding: 12px 20px;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  nav a:hover {
+    background-color: #002244;
+  }
+  main {
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
+  }
+  section {
+    display: none;
+  }
+  section.active {
+    display: block;
+  }
+  /* Login styles */
+  #loginBox {
+    max-width: 300px;
+    margin: 80px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #aaa;
+  }
+  #loginBox h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #004080;
+  }
+  #loginBox input[type=text],
+  #loginBox input[type=password] {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0 15px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  #loginBox button {
+    background-color: #004080;
+    color: white;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  #loginBox button:hover {
+    background-color: #002244;
+  }
+  /* Table style */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  table, th, td {
+    border: 1px solid #ccc;
+  }
+  th, td {
+    padding: 10px;
+    text-align: left;
+  }
+  th {
+    background-color: #004080;
+    color: white;
+  }
+  /* Status labels */
+  .status-active {
+    color: green;
+    font-weight: bold;
+  }
+  .status-pending {
+    color: orange;
+    font-weight: bold;
+  }
+  /* Missions */
+  #missionList li {
+    cursor: pointer;
+    padding: 5px 8px;
+    border-bottom: 1px solid #ccc;
+  }
+  #missionList li:hover {
+    background-color: #e0eaf9;
+    text-decoration: line-through;
+  }
+  /* Search input */
+  #personSearch {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  /* Person list rows */
+  #personList tbody tr {
+    cursor: pointer;
+  }
+  #personList tbody tr:hover {
+    background-color: #e0eaf9;
+  }
+  /* Modal */
+  #personModal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; top: 0; 
+    width: 100%; height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.6);
+  }
+  #personModalContent {
+    background-color: white;
+    margin: 80px auto;
+    padding: 20px;
+    max-width: 500px;
+    border-radius: 8px;
+    position: relative;
+  }
+  #personModalContent h3 {
+    margin-top: 0;
+    color: #004080;
+  }
+  #closeModal {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #666;
+  }
+  #closeModal:hover {
+    color: #000;
+  }
+  #crimeList {
+    margin-top: 10px;
+    list-style-type: disc;
+    padding-left: 20px;
+  }
+  #newCrimeInput {
+    width: 70%;
+    padding: 6px;
+    margin-top: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  #addCrimeBtn {
+    padding: 6px 12px;
+    margin-left: 8px;
+    background-color: #004080;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  #addCrimeBtn:hover {
+    background-color: #002244;
+  }
+  /* Responsive */
+  @media (max-width: 600px) {
+    nav {
+      flex-direction: column;
+    }
+    nav a {
+      text-align: center;
+      padding: 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="loginBox">
+  <h2>Logga in - ÖJ Polisen</h2>
+  <input type="text" id="username" placeholder="Användarnamn" autocomplete="username" />
+  <input type="password" id="password" placeholder="Lösenord" autocomplete="current-password" />
+  <button onclick="login()">Logga in</button>
+  <p id="loginError" style="color:red; display:none;">Fel användarnamn eller lösenord.</p>
+</div>
+
+<header style="display:none;" id="header">
+  ÖJ Polisen - Intranät
+</header>
+
+<nav style="display:none;" id="navMenu">
+  <a onclick="showSection('home')">Startsida</a>
+  <a onclick="showSection('personal')">Personal</a>
+  <a onclick="showSection('missions')">Uppdrag</a>
+  <a onclick="showSection('rules')">Regler & Utbildning</a>
+  <a onclick="showSection('vehicles')">Fordonsregister</a>
+  <a onclick="showSection('persons')">Personregister</a>
+  <a onclick="logout()">Logga ut</a>
+</nav>
+
+<main style="display:none;" id="mainContent">
+  <section id="home" class="active">
+    <h2>Välkommen till ÖJ Polisens intranät!</h2>
+    <p>Här hittar du all viktig information som behövs för ditt arbete som polis vid ÖJ Polisen.</p>
+    <p>Snabbnavigering: använd menyn ovan för att gå till personal, uppdrag, regler och fordon.</p>
+  </section>
+
+  <section id="personal">
+    <h2>Personal</h2>
+    <table>
+      <thead>
+        <tr><th>Namn</th><th>Rank</th><th>Status</th></tr>
+      </thead>
+      <tbody id="personalList">
+        <tr><td>Adrian Munter</td><td>Polis</td><td class="status-active">Aktiv</td></tr>
+        <tr><td>Lisa Svensson</td><td>Gruppchef</td><td class="status-active">Aktiv</td></tr>
+        <tr><td>Erik Karlsson</td><td>Rekryt</td><td class="status-pending">Praktikant</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="missions">
+    <h2>Aktuella uppdrag</h2>
+    <ul id="missionList" title="Klicka på ett uppdrag för att ta bort det"></ul>
+    <hr />
+    <h3>Lägg till nytt uppdrag</h3>
+    <input type="text" id="newMission" placeholder="Skriv nytt uppdrag här" style="width:80%;" />
+    <button onclick="addMission()">Lägg till</button>
+    <p><small>Klicka på ett uppdrag i listan för att ta bort det.</small></p>
+  </section>
+
+  <section id="rules">
+    <h2>Utbildning</h2>
+    <ul>
+      <li>Ansök här: https://docs.google.com/forms/d/e/1FAIpQLSdurgRsMvycbc1ib3K4JtBjqyYUHljXqXfK2VywfRuS40TjPg/viewform</li>
+      <li>Kommande Utbildningar</li>
+      <li>Inga kommande utbildningar</li>
+      <li>___________________________________________________________</li>
+    </ul>
+  </section>
+
+  <section id="vehicles">
+    <h2>Fordonsregister [Ur Funktion]</h2>
+    <table>
+      <thead>
+        <tr><th>Registreringsnummer</th><th>Typ</th><th>Förare</th><th>Status</th></tr>
+      </thead>
+      <tbody id="vehicleList">
+        <tr><td>ABC123</td><td>Polisbil</td><td>Adrian Munter</td><td class="status-active">I tjänst</td></tr>
+        <tr><td>XYZ789</td><td>Ambulans</td><td>Lisa Svensson</td><td class="status-active">I tjänst</td></tr>
+        <tr><td>DEF456</td><td>Brandbil</td><td>Erik Karlsson</td><td class="status-pending">Under underhåll</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="persons">
+    <h2>Personregister</h2>
+    <input type="text" id="personSearch" placeholder="Sök person (förnamn eller efternamn)" oninput="filterPersons()" />
+    <table>
+      <thead>
+        <tr><th>Förnamn</th><th>Efternamn</th><th>Personnummer</th></tr>
+      </thead>
+      <tbody id="personList"></tbody>
+    </table>
+  </section>
+</main>
+
+<!-- Modal for person details -->
+<div id="personModal">
+  <div id="personModalContent">
+    <span id="closeModal" onclick="closeModal()">&times;</span>
+    <h3 id="modalPersonName"></h3>
+    <p><strong>Personnummer:</strong> <span id="modalPersonId"></span></p>
+    <h4>Brott</h4>
+    <ul id="crimeList"></ul>
+    <input type="text" id="newCrimeInput" placeholder="Lägg till nytt brott" />
+    <button id="addCrimeBtn" onclick="addCrime()">Lägg till brott</button>
+  </div>
+</div>
+
+<script>
+  // Data for users who can log in
+  const users = [
+    { username: "Adrian Munter", password: "Sommarskuggan1" },
+    { username: "Benjamin Munter", password: "78963" }
+  ];
+
+  // Global mission list
+  let missions = [
+    "",
+    "",
+    ""
+  ];
+
+  // Personregister med brott
+  const persons = [
+    { "firstname": "Adrian", "lastname": "Munter", "id": "20130410-####", "crimes": [] },
+    { "firstname": "Benjamin", "lastname": "Munter", "id": "20170107-####", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Munter", "id": "19830503-####", "crimes": [] },
+    { "firstname": "Håkan", "lastname": "Munter", "id": "1965????-####", "crimes": [] },
+    { "firstname": "Maria", "lastname": "Lindqvist", "id": "19711002-7987", "crimes": [] },
+    { "firstname": "Erik", "lastname": "Olsson", "id": "19850412-1234", "crimes": [] },
+    { "firstname": "Sara", "lastname": "Nilsson", "id": "19990130-5678", "crimes": [] },
+    { "firstname": "Johan", "lastname": "Karlsson", "id": "19660715-9012", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Andersson", "id": "20031022-3456", "crimes": [] },
+    { "firstname": "Niklas", "lastname": "Bergström", "id": "19940909-7890", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Johansson", "id": "19780723-2345", "crimes": [] },
+    { "firstname": "Peter", "lastname": "Svensson", "id": "19591201-6789", "crimes": [] },
+    { "firstname": "Anders", "lastname": "Axelsson", "id": "19821214-4321", "crimes": [] },
+    { "firstname": "Eva", "lastname": "Hansson", "id": "19650319-8765", "crimes": [] },
+    { "firstname": "Fredrik", "lastname": "Nyström", "id": "19900305-3451", "crimes": [] },
+    { "firstname": "Karin", "lastname": "Holm", "id": "19750617-7892", "crimes": [] },
+    { "firstname": "Lars", "lastname": "Lundqvist", "id": "19881122-1238", "crimes": [] },
+    { "firstname": "Sofia", "lastname": "Engström", "id": "19950428-6782", "crimes": [] },
+    { "firstname": "Mats", "lastname": "Persson", "id": "19691210-4322", "crimes": [] },
+    { "firstname": "Elin", "lastname": "Svensson", "id": "19920715-5555", "crimes": [] },
+    { "firstname": "Sara", "lastname": "Lundgren", "id": "20000522-7777", "crimes": [] },
+    { "firstname": "Fredrik", "lastname": "Olsson", "id": "19951230-8888", "crimes": [] },
+    { "firstname": "Maria", "lastname": "Andersson", "id": "19790314-9999", "crimes": [] },
+    { "firstname": "Peter", "lastname": "Johansson", "id": "19681201-0001", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Nilsson", "id": "20030303-1235", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Söderberg", "id": "19820605-3457", "crimes": [] },
+    { "firstname": "Anders", "lastname": "Nyström", "id": "19731122-4568", "crimes": [] },
+    { "firstname": "Eva", "lastname": "Ekström", "id": "19691230-5679", "crimes": [] },
+    { "firstname": "Fredrik", "lastname": "Holm", "id": "19951015-6780", "crimes": [] },
+    { "firstname": "Karin", "lastname": "Lundqvist", "id": "19840112-7891", "crimes": [] },
+    { "firstname": "Lars", "lastname": "Axelsson", "id": "19770908-8902", "crimes": [] },
+    { "firstname": "Sofia", "lastname": "Hansson", "id": "19991225-9013", "crimes": [] },
+    { "firstname": "Mats", "lastname": "Blomqvist", "id": "19680114-1234", "crimes": [] },
+    { "firstname": "Adrian", "lastname": "Engström", "id": "20120417-2345", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Svensson", "id": "19860521-4567", "crimes": [] },
+    { "firstname": "Håkan", "lastname": "Karlsson", "id": "19690330-5678", "crimes": [] },
+    { "firstname": "Elin", "lastname": "Lundgren", "id": "19951111-6789", "crimes": [] },
+    { "firstname": "Johan", "lastname": "Olsson", "id": "19870907-7890", "crimes": [] },
+    { "firstname": "Sara", "lastname": "Andersson", "id": "20001212-8901", "crimes": [] },
+    { "firstname": "Fredrik", "lastname": "Johansson", "id": "19960523-9012", "crimes": [] },
+    { "firstname": "Maria", "lastname": "Nilsson", "id": "19780404-0123", "crimes": [] },
+    { "firstname": "Peter", "lastname": "Bergström", "id": "19691217-1235", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Persson", "id": "20040422-2346", "crimes": [] },
+    { "firstname": "Niklas", "lastname": "Lindqvist", "id": "19981230-3457", "crimes": [] },
+    { "firstname": "Tove", "lastname": "Sjöberg", "id": "19730611-4321", "crimes": [] },
+    { "firstname": "Martin", "lastname": "Fredriksson", "id": "19811209-5678", "crimes": [] },
+    { "firstname": "Lisa", "lastname": "Berglund", "id": "19940930-9012", "crimes": [] },
+    { "firstname": "Simon", "lastname": "Hedlund", "id": "19670120-3456", "crimes": [] },
+    { "firstname": "Nina", "lastname": "Åkesson", "id": "20021105-7890", "crimes": [] },
+    { "firstname": "Oskar", "lastname": "Rydberg", "id": "19950515-2345", "crimes": [] },
+    { "firstname": "Elisabeth", "lastname": "Lindholm", "id": "19820707-6789", "crimes": [] },
+    { "firstname": "Andreas", "lastname": "Viklund", "id": "19781222-1234", "crimes": [] },
+    { "firstname": "Carina", "lastname": "Englund", "id": "19690912-4567", "crimes": [] },
+    { "firstname": "Patrik", "lastname": "Nyberg", "id": "19991208-8901", "crimes": [] },
+    { "firstname": "Malin", "lastname": "Håkansson", "id": "19860318-3457", "crimes": [] },
+    { "firstname": "Erika", "lastname": "Norén", "id": "19710929-7891", "crimes": [] },
+    { "firstname": "Magnus", "lastname": "Söderberg", "id": "19681102-2346", "crimes": [] },
+    { "firstname": "Jenny", "lastname": "Holmberg", "id": "19930527-6780", "crimes": [] },
+    { "firstname": "Daniel", "lastname": "Axelsson", "id": "19891217-1235", "crimes": [] },
+    { "firstname": "Jessica", "lastname": "Lundgren", "id": "19740830-5679", "crimes": [] },
+    { "firstname": "Jens", "lastname": "Ekström", "id": "19660503-8902", "crimes": [] },
+    { "firstname": "Sandra", "lastname": "Bergqvist", "id": "20000322-9013", "crimes": [] },
+    { "firstname": "Pontus", "lastname": "Lind", "id": "19920419-1234", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Forsberg", "id": "19800111-2345", "crimes": [] },
+    { "firstname": "Anders", "lastname": "Svensson", "id": "19770116-3456", "crimes": [] },
+    { "firstname": "Marie", "lastname": "Nyström", "id": "19680423-4567", "crimes": [] },
+    { "firstname": "Joakim", "lastname": "Lindgren", "id": "19981104-5678", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Hedström", "id": "19860330-6789", "crimes": [] },
+    { "firstname": "Fredrik", "lastname": "Sjöström", "id": "19720915-7890", "crimes": [] },
+    { "firstname": "Camilla", "lastname": "Björk", "id": "19690925-8901", "crimes": [] },
+    { "firstname": "Ola", "lastname": "Löfgren", "id": "19950412-9012", "crimes": [] },
+    { "firstname": "Emelie", "lastname": "Carlsson", "id": "19870108-1234", "crimes": [] },
+    { "firstname": "Marcus", "lastname": "Lindström", "id": "19730404-2345", "crimes": [] },
+    { "firstname": "Jessica", "lastname": "Holm", "id": "19680521-3456", "crimes": [] },
+    { "firstname": "Mattias", "lastname": "Svensson", "id": "19991229-4567", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Johansson", "id": "19840317-5678", "crimes": [] },
+    { "firstname": "Stefan", "lastname": "Andersson", "id": "19711226-6789", "crimes": [] },
+    { "firstname": "Annika", "lastname": "Berg", "id": "19690714-7890", "crimes": [] },
+    { "firstname": "Robert", "lastname": "Hansson", "id": "19930808-8901", "crimes": [] },
+    { "firstname": "Malin", "lastname": "Nilsson", "id": "19810502-9012", "crimes": [] },
+    { "firstname": "Björn", "lastname": "Karlsson", "id": "19751219-1235", "crimes": [] },
+    { "firstname": "Caroline", "lastname": "Söderberg", "id": "19690428-2346", "crimes": [] },
+    { "firstname": "Henrik", "lastname": "Axelsson", "id": "19970907-3457", "crimes": [] },
+    { "firstname": "Sofia", "lastname": "Lundqvist", "id": "19820220-4568", "crimes": [] },
+    { "firstname": "Kristoffer", "lastname": "Hedlund", "id": "19760525-5679", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Nyström", "id": "19690601-6780", "crimes": [] },
+    { "firstname": "Jonas", "lastname": "Ek", "id": "19900111-7891", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Forsberg", "id": "19861009-8902", "crimes": [] },
+    { "firstname": "Mikael", "lastname": "Lindberg", "id": "19730427-9013", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Bergström", "id": "19680215-1234", "crimes": [] },
+    { "firstname": "David", "lastname": "Olsson", "id": "19991031-2345", "crimes": [] },
+    { "firstname": "Sandra", "lastname": "Holmberg", "id": "19850216-3456", "crimes": [] },
+    { "firstname": "Johan", "lastname": "Blomqvist", "id": "19760913-4567", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Carlsson", "id": "19690324-5678", "crimes": [] },
+    { "firstname": "Fredrik", "lastname": "Lind", "id": "19970530-6789", "crimes": [] },
+    { "firstname": "Jessica", "lastname": "Nyberg", "id": "19840218-7890", "crimes": [] },
+    { "firstname": "Martin", "lastname": "Lundgren", "id": "19720112-8901", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Hedström", "id": "19681229-9012", "crimes": [] },
+    { "firstname": "Andreas", "lastname": "Sjöberg", "id": "19920321-1234", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Björklund", "id": "19860906-2345", "crimes": [] },
+    { "firstname": "Robert", "lastname": "Håkansson", "id": "19750519-3456", "crimes": [] },
+    { "firstname": "Caroline", "lastname": "Norén", "id": "19670129-4567", "crimes": [] },
+    { "firstname": "Patrik", "lastname": "Lindholm", "id": "19981223-5678", "crimes": [] },
+    { "firstname": "Elin", "lastname": "Viklund", "id": "19841015-6789", "crimes": [] },
+    { "firstname": "Simon", "lastname": "Englund", "id": "19730907-7890", "crimes": [] },
+    { "firstname": "Malin", "lastname": "Nyström", "id": "19680304-8901", "crimes": [] },
+    { "firstname": "Jens", "lastname": "Bergqvist", "id": "19991127-9012", "crimes": [] },
+    { "firstname": "Marie", "lastname": "Lind", "id": "19850408-1235", "crimes": [] },
+    { "firstname": "Daniel", "lastname": "Forsberg", "id": "19770120-2346", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Svensson", "id": "19691211-3457", "crimes": [] },
+    { "firstname": "Jonas", "lastname": "Nyberg", "id": "19930505-4568", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Karlsson", "id": "19860830-5679", "crimes": [] },
+    { "firstname": "Marcus", "lastname": "Axelsson", "id": "19740101-6780", "crimes": [] },
+    { "firstname": "Jessica", "lastname": "Lundqvist", "id": "19690418-7891", "crimes": [] },
+    { "firstname": "Mattias", "lastname": "Hansson", "id": "19971210-8902", "crimes": [] },
+    { "firstname": "Stefan", "lastname": "Holm", "id": "19830525-9013", "crimes": [] },
+    { "firstname": "Annika", "lastname": "Blomqvist", "id": "19710930-1234", "crimes": [] },
+    { "firstname": "Robert", "lastname": "Söderberg", "id": "19680115-2345", "crimes": [] },
+    { "firstname": "Malin", "lastname": "Lindqvist", "id": "19991118-3456", "crimes": [] },
+    { "firstname": "Björn", "lastname": "Nyström", "id": "19860128-4567", "crimes": [] },
+    { "firstname": "Caroline", "lastname": "Ekström", "id": "19721122-5678", "crimes": [] },
+    { "firstname": "Henrik", "lastname": "Berg", "id": "19690405-6789", "crimes": [] },
+    { "firstname": "Sofia", "lastname": "Hedlund", "id": "19930319-7890", "crimes": [] },
+    { "firstname": "Kristoffer", "lastname": "Lindgren", "id": "19840312-8901", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Nyberg", "id": "19770521-9012", "crimes": [] },
+    { "firstname": "Jonas", "lastname": "Forsberg", "id": "19681202-1235", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Sjöberg", "id": "19950930-2346", "crimes": [] },
+    { "firstname": "Mikael", "lastname": "Björklund", "id": "19820116-3457", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Håkansson", "id": "19740927-4568", "crimes": [] },
+    { "firstname": "David", "lastname": "Norén", "id": "19670213-5679", "crimes": [] },
+    { "firstname": "Sandra", "lastname": "Lindholm", "id": "19961105-6780", "crimes": [] },
+    { "firstname": "Johan", "lastname": "Viklund", "id": "19890711-7891", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Englund", "id": "19730630-8902", "crimes": [] },
+    { "firstname": "Jessica", "lastname": "Bergqvist", "id": "19941025-1234", "crimes": [] },
+    { "firstname": "Martin", "lastname": "Lind", "id": "19810315-2345", "crimes": [] },
+    { "firstname": "Andreas", "lastname": "Svensson", "id": "19691208-4567", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Nyberg", "id": "19980314-5678", "crimes": [] },
+    { "firstname": "Robert", "lastname": "Lundgren", "id": "19841119-6789", "crimes": [] },
+    { "firstname": "Caroline", "lastname": "Hedström", "id": "19730827-7890", "crimes": [] },
+    { "firstname": "Patrik", "lastname": "Sjöberg", "id": "19690409-8901", "crimes": [] },
+    { "firstname": "Elin", "lastname": "Björklund", "id": "19920723-9012", "crimes": [] },
+    { "firstname": "Simon", "lastname": "Håkansson", "id": "19860131-1234", "crimes": [] },
+    { "firstname": "Malin", "lastname": "Norén", "id": "19751217-2345", "crimes": [] },
+    { "firstname": "Jens", "lastname": "Lindholm", "id": "19690311-3456", "crimes": [] },
+    { "firstname": "Marie", "lastname": "Viklund", "id": "19990822-4567", "crimes": [] },
+    { "firstname": "Daniel", "lastname": "Englund", "id": "19851007-5678", "crimes": [] },
+    { "firstname": "Jonas", "lastname": "Bergqvist", "id": "19680226-7890", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Lind", "id": "19970113-8901", "crimes": [] },
+    { "firstname": "Elina", "lastname": "Ström", "id": "19830415-7123", "crimes": [] },
+    { "firstname": "Gustav", "lastname": "Lindahl", "id": "19750203-9845", "crimes": [] },
+    { "firstname": "Cecilia", "lastname": "Bergman", "id": "19901112-4532", "crimes": [] },
+    { "firstname": "Filip", "lastname": "Holmgren", "id": "19871227-6154", "crimes": [] },
+    { "firstname": "Ida", "lastname": "Eklund", "id": "19990509-7243", "crimes": [] },
+    { "firstname": "Sebastian", "lastname": "Åström", "id": "19860923-8761", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Björn", "id": "19731219-5927", "crimes": [] },
+    { "firstname": "Martin", "lastname": "Kjellberg", "id": "19680901-3789", "crimes": [] },
+    { "firstname": "Ann-Sofie", "lastname": "Nordin", "id": "19970214-1982", "crimes": [] },
+    { "firstname": "Axel", "lastname": "Falk", "id": "20010618-7462", "crimes": [] },
+    { "firstname": "Sofia", "lastname": "Rosen", "id": "19851122-3245", "crimes": [] },
+    { "firstname": "Erik", "lastname": "Holmqvist", "id": "19790625-1956", "crimes": [] },
+    { "firstname": "Karin", "lastname": "Engström", "id": "19930630-5849", "crimes": [] },
+    { "firstname": "Oskar", "lastname": "Lindström", "id": "19821004-7312", "crimes": [] },
+    { "firstname": "Maja", "lastname": "Persson", "id": "19980211-9273", "crimes": [] },
+    { "firstname": "Jonas", "lastname": "Alm", "id": "19690508-8152", "crimes": [] },
+    { "firstname": "Amanda", "lastname": "Wikström", "id": "19941120-6729", "crimes": [] },
+    { "firstname": "Elin", "lastname": "Nyström", "id": "19900218-6481", "crimes": [] },
+    { "firstname": "Johan", "lastname": "Fransson", "id": "19840521-1793", "crimes": [] },
+    { "firstname": "Isabelle", "lastname": "Karlsson", "id": "19970329-5271", "crimes": [] },
+    { "firstname": "Simon", "lastname": "Lund", "id": "19871216-8372", "crimes": [] },
+    { "firstname": "Malin", "lastname": "Bergqvist", "id": "19910902-9534", "crimes": [] },
+    { "firstname": "Fredrik", "lastname": "Ekström", "id": "19781204-6489", "crimes": [] },
+    { "firstname": "Josefin", "lastname": "Åkesson", "id": "19960530-2847", "crimes": [] },
+    { "firstname": "Anders", "lastname": "Sandberg", "id": "19690419-7832", "crimes": [] },
+    { "firstname": "Carolina", "lastname": "Lindgren", "id": "19861125-1528", "crimes": [] },
+    { "firstname": "David", "lastname": "Nyman", "id": "19740513-6472", "crimes": [] },
+    { "firstname": "Emelie", "lastname": "Björk", "id": "19990706-1285", "crimes": [] },
+    { "firstname": "Niklas", "lastname": "Fors", "id": "19830301-9751", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Olofsson", "id": "19791027-4157", "crimes": [] },
+    { "firstname": "Andreas", "lastname": "Lundqvist", "id": "19680815-2394", "crimes": [] },
+    { "firstname": "Jenny", "lastname": "Hansson", "id": "19890109-7461", "crimes": [] },
+    { "firstname": "Marcus", "lastname": "Pettersson", "id": "19951003-6389", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Lind", "id": "19811207-4925", "crimes": [] },
+    { "firstname": "Mattias", "lastname": "Nyberg", "id": "19770928-2816", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Hedlund", "id": "19940417-7543", "crimes": [] },
+    { "firstname": "Joakim", "lastname": "Rydberg", "id": "19861013-1639", "crimes": [] },
+    { "firstname": "Katarina", "lastname": "Blom", "id": "19730222-5874", "crimes": [] },
+    { "firstname": "Simon", "lastname": "Viklund", "id": "19980320-4628", "crimes": [] },
+    { "firstname": "Jessica", "lastname": "Lindström", "id": "19890910-3157", "crimes": [] },
+    { "firstname": "Robert", "lastname": "Nordin", "id": "19760105-8941", "crimes": [] },
+    { "firstname": "Caroline", "lastname": "Strand", "id": "19920227-7215", "crimes": [] },
+    { "firstname": "Henrik", "lastname": "Ek", "id": "19800718-6239", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Holm", "id": "19951225-9486", "crimes": [] },
+    { "firstname": "Jonas", "lastname": "Falk", "id": "19780330-5627", "crimes": [] },
+    { "firstname": "Kristoffer", "lastname": "Englund", "id": "19970729-6148", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Sandström", "id": "19831115-4873", "crimes": [] },
+    { "firstname": "Magnus", "lastname": "Åberg", "id": "19710205-5982", "crimes": [] },
+    { "firstname": "Maria", "lastname": "Nylund", "id": "19991023-2754", "crimes": [] },
+    { "firstname": "Daniel", "lastname": "Sjöström", "id": "19860212-7195", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Berg", "id": "19741211-9364", "crimes": [] },
+    { "firstname": "Mikael", "lastname": "Lindqvist", "id": "19931103-1548", "crimes": [] },
+    { "firstname": "Carina", "lastname": "Holmberg", "id": "19871006-8739", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Lund", "id": "19980521-4136", "crimes": [] },
+    { "firstname": "Fredrik", "lastname": "Karlsson", "id": "19840929-3578", "crimes": [] },
+    { "firstname": "Malin", "lastname": "Åkesson", "id": "19730914-6912", "crimes": [] },
+    { "firstname": "Pontus", "lastname": "Nordin", "id": "19900126-7259", "crimes": [] },
+    { "firstname": "Jessica", "lastname": "Svensson", "id": "19811230-5387", "crimes": [] },
+    { "firstname": "Stefan", "lastname": "Lindgren", "id": "19751021-2943", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Engström", "id": "19960605-8127", "crimes": [] },
+    { "firstname": "Johan", "lastname": "Björk", "id": "19820127-4715", "crimes": [] },
+    { "firstname": "Caroline", "lastname": "Holm", "id": "19790912-9532", "crimes": [] },
+    { "firstname": "Henrik", "lastname": "Lindholm", "id": "19851102-6894", "crimes": [] },
+    { "firstname": "Malin", "lastname": "Nyberg", "id": "19931017-4139", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Blomqvist", "id": "19880526-2753", "crimes": [] },
+    { "firstname": "Mattias", "lastname": "Åström", "id": "19991230-9846", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Nyman", "id": "19741107-1825", "crimes": [] },
+    { "firstname": "Andreas", "lastname": "Fors", "id": "19870415-6574", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Wikström", "id": "19950514-7938", "crimes": [] },
+    { "firstname": "Karin", "lastname": "Åberg", "id": "19820908-6751", "crimes": [] },
+    { "firstname": "Niklas", "lastname": "Lind", "id": "19910319-5926", "crimes": [] },
+    { "firstname": "Sofia", "lastname": "Nyström", "id": "19781225-8439", "crimes": [] },
+    { "firstname": "Daniel", "lastname": "Bergqvist", "id": "19861031-2173", "crimes": [] },
+    { "firstname": "Björn", "lastname": "Lundgren", "id": "19691215-6714", "crimes": [] },
+    { "firstname": "Jessica", "lastname": "Karlsson", "id": "19820123-7582", "crimes": [] },
+    { "firstname": "Johan", "lastname": "Sandberg", "id": "19960419-8643", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Holmström", "id": "19751028-1437", "crimes": [] },
+    { "firstname": "Simon", "lastname": "Nylund", "id": "19890918-2935", "crimes": [] },
+    { "firstname": "Elin", "lastname": "Rydberg", "id": "19920904-7529", "crimes": [] },
+    { "firstname": "Martin", "lastname": "Forsberg", "id": "19780313-4817", "crimes": [] },
+    { "firstname": "Linda", "lastname": "Åkesson", "id": "19860223-9174", "crimes": [] },
+    { "firstname": "Marcus", "lastname": "Blom", "id": "19971231-6382", "crimes": [] },
+    { "firstname": "Therese", "lastname": "Lindgren", "id": "19760101-4573", "crimes": [] },
+    { "firstname": "David", "lastname": "Nyström", "id": "19890407-2591", "crimes": [] },
+    { "firstname": "Emma", "lastname": "Björklund", "id": "19931129-7364", "crimes": [] },
+    { "firstname": "Niklas", "lastname": "Sjöberg", "id": "19810708-9127", "crimes": [] },
+    { "firstname": "Katarina", "lastname": "Holmberg", "id": "19740825-3149", "crimes": [] },
+    { "firstname": "Maria", "lastname": "Sandberg", "id": "19860721-6834", "crimes": [] },
+    { "firstname": "Daniel", "lastname": "Holmberg", "id": "19741129-5948", "crimes": [] },
+    { "firstname": "Anna", "lastname": "Björklund", "id": "19980814-7391", "crimes": [] }
+  ];
+
+  // --- LOGIN FUNCTION ---
+  function login() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+
+    const validUser = users.find(u => u.username === username && u.password === password);
+    if (validUser) {
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("header").style.display = "block";
+      document.getElementById("navMenu").style.display = "flex";
+      document.getElementById("mainContent").style.display = "block";
+      document.getElementById("loginError").style.display = "none";
+
+      loadMissions();
+      loadPersons();
+      showSection("home");
+    } else {
+      document.getElementById("loginError").style.display = "block";
+    }
+  }
+
+  // --- LOGOUT FUNCTION ---
+  function logout() {
+    if(confirm("Vill du logga ut?")) {
+      location.reload();
+    }
+  }
+
+  // --- NAVIGATION ---
+  function showSection(id) {
+    const sections = document.querySelectorAll("main section");
+    sections.forEach(section => {
+      section.classList.remove("active");
+      if(section.id === id) section.classList.add("active");
+    });
+  }
+
+  // --- MISSIONS ---
+  function loadMissions() {
+    const list = document.getElementById("missionList");
+    list.innerHTML = "";
+    missions.forEach((mission, idx) => {
+      const li = document.createElement("li");
+      li.textContent = mission;
+      li.onclick = () => {
+        if (confirm(`Ta bort uppdraget:\n"${mission}"?`)) {
+          missions.splice(idx, 1);
+          loadMissions();
+        }
+      };
+      list.appendChild(li);
+    });
+  }
+
+  function addMission() {
+    const newMissionInput = document.getElementById("newMission");
+    const mission = newMissionInput.value.trim();
+    if(mission) {
+      missions.push(mission);
+      newMissionInput.value = "";
+      loadMissions();
+      alert("Uppdrag tillagt.");
+    } else {
+      alert("Skriv in ett uppdrag innan du lägger till.");
+    }
+  }
+
+  // --- PERSONREGISTER ---
+  function loadPersons() {
+    const tbody = document.getElementById("personList");
+    tbody.innerHTML = "";
+    persons.forEach((person, idx) => {
+      const tr = document.createElement("tr");
+      tr.onclick = () => showPersonModal(idx);
+      tr.innerHTML = `
+        <td>${person.firstname}</td>
+        <td>${person.lastname}</td>
+        <td>${person.id}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function filterPersons() {
+    const filter = document.getElementById("personSearch").value.toLowerCase();
+    const tbody = document.getElementById("personList");
+    tbody.innerHTML = "";
+    persons.forEach((person, idx) => {
+      const fullName = (person.firstname + " " + person.lastname).toLowerCase();
+      if(person.firstname.toLowerCase().includes(filter) || person.lastname.toLowerCase().includes(filter) || fullName.includes(filter)) {
+        const tr = document.createElement("tr");
+        tr.onclick = () => showPersonModal(idx);
+        tr.innerHTML = `
+          <td>${person.firstname}</td>
+          <td>${person.lastname}</td>
+          <td>${person.id}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    });
+  }
+
+  // --- MODAL PERSON ---
+  let currentPersonIndex = null;
+  function showPersonModal(index) {
+    currentPersonIndex = index;
+    const person = persons[index];
+    document.getElementById("modalPersonName").textContent = person.firstname + " " + person.lastname;
+    document.getElementById("modalPersonId").textContent = person.id;
+    loadCrimeList();
+    document.getElementById("newCrimeInput").value = "";
+    document.getElementById("personModal").style.display = "block";
+  }
+
+  function closeModal() {
+    document.getElementById("personModal").style.display = "none";
+  }
+
+  // --- CRIMES ---
+  function loadCrimeList() {
+    const crimeList = document.getElementById("crimeList");
+    crimeList.innerHTML = "";
+    const crimes = persons[currentPersonIndex].crimes;
+    if(crimes.length === 0) {
+      crimeList.innerHTML = "<li>Inga registrerade brott.</li>";
+      return;
+    }
+    crimes.forEach((crime, idx) => {
+      const li = document.createElement("li");
+      li.textContent = crime + " ";
+      // Add remove button for crime
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "Ta bort";
+      removeBtn.style.marginLeft = "10px";
+      removeBtn.style.fontSize = "12px";
+      removeBtn.style.color = "white";
+      removeBtn.style.backgroundColor = "#cc0000";
+      removeBtn.style.border = "none";
+      removeBtn.style.borderRadius = "4px";
+      removeBtn.style.cursor = "pointer";
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        if(confirm(`Vill du ta bort brottet "${crime}"?`)) {
+          persons[currentPersonIndex].crimes.splice(idx, 1);
+          loadCrimeList();
+        }
+      };
+      li.appendChild(removeBtn);
+      crimeList.appendChild(li);
+    });
+  }
+
+  function addCrime() {
+    const newCrime = document.getElementById("newCrimeInput").value.trim();
+    if(!newCrime) {
+      alert("Skriv in ett brott för att lägga till.");
+      return;
+    }
+    if(currentPersonIndex === null) {
+      alert("Ingen person vald.");
+      return;
+    }
+    // Lägg till brott i personens brottslista
+    persons[currentPersonIndex].crimes.push(newCrime);
+    document.getElementById("newCrimeInput").value = "";
+    loadCrimeList();
+    alert(`Brottet "${newCrime}" har lagts till.`);
+  }
+
+  // --- Close modal on outside click ---
+  window.onclick = function(event) {
+    const modal = document.getElementById("personModal");
+    if (event.target === modal) {
+      closeModal();
+    }
+  }
+</script>
+
+</body>
+</html>
